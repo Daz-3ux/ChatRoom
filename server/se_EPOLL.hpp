@@ -143,12 +143,12 @@ void *communication(void *arg) {
       if (flag == 0) {
         bool ret = myredis.setHash(userMap, js["name"], s);
         if (ret) {
-          IO::SendMsg(fd, "Success:注册成功", 21);
+          IO::SendMsg(fd, "Success:注册成功", 8);
         } else {
-          IO::SendMsg(fd, "Faild:注册失败", 19);
+          IO::SendMsg(fd, "Faild:注册失败", 6);
         }
       } else {
-        IO::SendMsg(fd, "用户已注册", 16);
+        IO::SendMsg(fd, "该用户已注册", 19);
       }
     } else if (status == 2) {  // 登陆
       std::cout << "让我们来登陆吧" << std::endl;
@@ -193,8 +193,91 @@ void *communication(void *arg) {
       }
     } else if (status == 5) {  // 修改昵称
       std::cout << "让我们来修改昵称吧" << std::endl;
-    } else if (status == 4) {  // 找回密码
-      std::cout << "让我们来找回密码吧" << std::endl;
+    } else if (status == 4) {  // 注销账号
+      std::string name = js["name"];
+      std::string key("userMap");
+      int exist = myredis.hashExist(key, name);
+      if (exist) {
+        IO::SendMsg(fd, "exist", 6);
+
+        std::string value = myredis.getHash(key, name);
+        json user = json::parse(value);
+        std::string question = user["question"];
+        std::string answer = user["answer"];
+        std::string passwd = user["passwd"];
+        char buffer[1024];
+        memset(buffer, 0, sizeof(buffer));
+        IO::RecvMsg(fd, buffer, sizeof(buffer));
+        std::string pass(buffer);
+
+        IO::SendMsg(fd, question.c_str(), question.size() + 1);
+        memset(buffer, 0, sizeof(buffer));
+        IO::RecvMsg(fd, buffer, sizeof(buffer));
+        std::string ans(buffer);
+
+        int flag1 = pass == passwd ? 1 : 0;
+        int flag2 = ans == answer ? 1 : 0;
+
+        std::cout << "flag1:" << flag1 << std::endl;
+        std::cout << "flag2:" << flag2 << std::endl;
+
+        if (flag1 && flag2) {
+          IO::SendMsg(fd, "ok", 3);
+          // 删除群聊
+          std::string G("_G");
+          std::string Gper("_Gper");
+          std::string gro("_group");
+          std::string group = name+gro;
+          int len = myredis.slen(group);
+          if (len) {
+            std::vector<std::string> groups;
+            groups = myredis.smembers(group);
+            for (int i = 0; i < len; i++) {
+              std::string groG = groups[i]+G;
+              std::string per = myredis.getHash(groG, name);
+              if (strcmp(per.c_str(), "master") == 0) {
+                IO::SendMsg(fd, "cant", 5);
+                return nullptr;
+              }
+            }
+            IO::SendMsg(fd, "well", 5);
+            for (int i = 0; i < len; i++) {
+              std::string groG = groups[i]+G;
+              std::string groGper = groups[i] + Gper;
+              myredis.hashDel(groG, name);
+              myredis.hashDel(groGper, name);
+              myredis.srmmember(group, groups[i]);
+            }
+          }
+
+          // 删除好友
+          std::string userMap("userMap");
+          myredis.hashDel(userMap, name);
+          std::string mes("_mess");
+          std::string mess = name+mes;
+          if (myredis.llen(mess) != 0) {
+            myredis.ltrim(mess);
+          }
+          std::string fri("_friend");
+          std::string frien = name+fri;
+          len = myredis.hlen(frien);
+          if (len) {
+            std::vector<std::string> friends;
+            friends = myredis.getHashKey(frien);
+            for (int i = 0; i < len; i++) {
+              std::string who = friends[i];
+              std::string whofri = who+fri;
+              myredis.hashDel(frien, who);
+              myredis.hashDel(whofri, name);
+            }
+          }
+
+        } else {
+          IO::SendMsg(fd, "false", 6);
+        }
+      } else {
+        IO::SendMsg(fd, "no", 3);
+      }
 
     } else if (status == 6) {  // 退出登陆
       std::cout << "让我们退出登陆吧" << std::endl;
@@ -434,7 +517,6 @@ void *communication(void *arg) {
       } else {
         IO::SendMsg(fd, "notexist", 9);
       }
-      
 
     } else if (status == 17) {  // 屏蔽
       std::string a = js["name"];
@@ -626,7 +708,7 @@ void *communication(void *arg) {
       }else{
         IO::SendMsg(fd, "no", 3);
       }
-      
+
     } else if (status == 23) {  // 注册群聊
       std::string group_tail("_G");
       std::string grouphave("_group");
@@ -683,6 +765,17 @@ void *communication(void *arg) {
             //myredis.setHash(gApply, who, "1");
             myredis.lpush(gApply, who);
             IO::SendMsg(fd, "ok", 3);
+            int len = myredis.hlen(gAlready);
+            std::vector<std::string> result_name;
+            result_name = myredis.getHashKey(gAlready);
+            std::string group_ding("group_ding");
+            for(int i = 0; i < len; i++) {
+              std::string flag  = myredis.getHash(gAlready,result_name[i]);
+              if(strcmp(flag.c_str(), "master") == 0 || strcmp(flag.c_str(), "manager")) {
+                std::string ding = result_name[i]+group_ding;
+                myredis.lpush(ding, who);
+              }
+            }
           }
         }
       }
@@ -978,11 +1071,11 @@ void *communication(void *arg) {
               std::string flag_group = js["nameWant"];
               std::string flag_name = js["mess"];
               std::string group_G = flag_group+flag_g;
-              std::string group_per = flag_per+flag_per;
+              std::string group_per = flag_group+flag_per;
               std::string name = flag_name+flag_own;
               myredis.hashDel(group_G, flag_name);
               myredis.hashDel(group_per, flag_name);
-              myredis.hashDel(name, flag_group);
+              myredis.srmmember(name, flag_group);
 
             }
             if (strcmp(flag_mas.c_str(), "manager") == 0) {  // 是管理员的话
@@ -1097,7 +1190,7 @@ void *communication(void *arg) {
           }
         }
       }
-    } else if (status == 38) {  // 对话框外聊天 
+    } else if (status == 38) {  // 对话框外聊天
       std::string talk_a = js["name"];
       std::string talk_b(" talk to you: ");
       std::string talk_c = js["mess"];
@@ -1131,9 +1224,11 @@ void *communication(void *arg) {
       std::string str_b("leave_ding");
       std::string str_c("apply_ding");
       std::string str_d("_files_ding");
+      std::string str_e("group_ding");
       std::string leave_ding = str_a + str_b;
       std::string apply_ding = str_a + str_c;
       std::string files_ding = str_a + str_d;
+      std::string group_ding = str_a + str_e;
       // while(1){
 
       while(1) {  
@@ -1146,8 +1241,6 @@ void *communication(void *arg) {
           //std::cout << ll << std::endl;
           IO::SendMsg(fd, ll.c_str(), ll.size()+1);
         }
-
-        // 处理私聊
 
         // 好友申请
         int apply_len = myredis.llen(apply_ding);
@@ -1166,10 +1259,17 @@ void *communication(void *arg) {
           myredis.setString(files_ding, "false");
           IO::SendMsg(fd, mes_c.c_str(), mes_c.size() + 1);
         }
+
+        int group_len = myredis.llen(group_ding);
+        if(group_len != 0) {
+          std::string ding = myredis.lpop(group_ding);
+          std::string group("group");
+          std::string send = group+ding;
+          IO::SendMsg(fd, send.c_str(), send.size()+1);
+        }
+        
       }
     }
-  
-  
   }
   free(info);
   return NULL;

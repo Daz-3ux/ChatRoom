@@ -75,10 +75,11 @@ public:
   static void Setsock(int sockfd)
   {
     int keepalive = 1;   // 开启TCP KeepAlive功能
-    int keepidle = 27; // tcp_keepalive_time
+    int keepidle = 5; // tcp_keepalive_time
     int keepcnt = 3;     // tcp_keepalive_probes
     int keepintvl = 3;  // tcp_keepalive_intvl
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
+    int on = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
     setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(keepalive));
     setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(keepidle));
     setsockopt(sockfd, SOL_TCP, TCP_KEEPCNT, (void *)&keepcnt, sizeof(keepcnt));

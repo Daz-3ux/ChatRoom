@@ -316,7 +316,7 @@ void *reFromChat(void *arg) {
   while (1) {
     memset(buffer, 0, sizeof(buffer));
     int len = IO::RecvMsg(fd, buffer, sizeof(buffer));
-    printf("%d :receice len in 319", len);
+    //printf("%d :receive len in 319", len);
     std::string a(buffer);
     if (strcmp(a.c_str(), "exit") == 0) {
       pthread_exit(0);

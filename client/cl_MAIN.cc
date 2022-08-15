@@ -20,12 +20,12 @@ a:
     }
     int opt = atoi(action.c_str());
     switch (opt) {
-      case 1:  // 注册
+      case 2:  // 注册
       {
         registerNewAccount(msg, sockfd);
         break;
       }
-      case 2:  // 登陆
+      case 1:  // 登陆
       {
         loginAccount(inmsg, ding, sockfd);
         break;
@@ -35,6 +35,9 @@ a:
         break;
       case 4:  // 找回密码
         findPassword(sockfd);
+        break;
+      case 5:  // 注销账号
+        delself(sockfd);
         break;
       case -1:  // 退出
         // loginOff();
@@ -63,7 +66,7 @@ int main(int argc, char *argv[]) {
     std::cout << "ip_address: " << IP << " port_number: " << PORT << std::endl;
   }
 
-  printf("pid: %d", getpid());
+  printf("pid: %d\n", getpid());
 
   int clientSocket = Sock::Socket();
   Sock::Connect(clientSocket, IP, PORT);
@@ -72,8 +75,11 @@ int main(int argc, char *argv[]) {
   MsgData msg;
   MsgInfo inmsg;
   login_Info ding;
+  // file_Info filesent;
   ding.ip = IP;
   ding.port = PORT;
+  // filesent.ip = IP;
+  // filesent.port = PORT;
   loopAction(msg, inmsg, ding, clientSocket);
   close(clientSocket);
 

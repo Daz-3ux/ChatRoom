@@ -37,8 +37,8 @@ enum Status {
   _REGISTER = 1,
   _LOGIN,
   _NEWPSWD,
-  _NEWNAME,
-  _FINDPSWD,
+  _DELONESELF,
+  _RENAME,
   _OFF,
   _ADDFRIEND,
   _APPLYFRIEND,
@@ -75,13 +75,23 @@ struct login_Info {
   login_Info() = default;
 };
 
+// struct file_Info{
+//   std::string ip;
+//   int port;
+//   int fd;
+//   int fp;
+//   off_t size;
+//   std::string mess;
+//   file_Info() = default;
+// };
+
 struct MsgData {
   std::string name;
   std::string passwd;
   int loginStatus;
   std::string question;
   std::string answer;
-  
+
   MsgData() = default;
 };
 
@@ -273,6 +283,7 @@ void registerNewAccount(MsgData &msg, int sockfd) {
   std::string mess(message, sizeof(message));
 
   std::cout << mess << std::endl;
+  firstMenu();
 }
 
 void updataPassword(int sockfd) {
@@ -361,6 +372,60 @@ void findPassword(int sockfd) {
   }
 }
 
+void delself(int sockfd) {
+  MsgApply find;
+  std::cout << "请输入您的用户名" << std::endl;
+  std::cin >> find.name;
+  //find.name = inmsg.name;
+  find.loginStatus = _DELONESELF;
+  std::string find_info = applyJson(find);
+  IO::SendMsg(sockfd, find_info.c_str(), find_info.size() + 1);
+
+  char buffer[1024];
+  memset(buffer, 0, sizeof(buffer));
+  IO::RecvMsg(sockfd, buffer, sizeof(buffer));
+  std::string exist(buffer);
+  if (strcmp(exist.c_str(), "exist") == 0) {
+    std::string myPasswd;
+    std::cout << "请输入密码" << std::endl;
+    system("stty -echo");
+    std::cin.get();
+    getline(std::cin, myPasswd);
+    myPasswd = removeSpaces(myPasswd);
+    system("stty echo");
+    IO::SendMsg(sockfd, myPasswd.c_str(), myPasswd.size()+1);
+
+
+
+    IO::RecvMsg(sockfd, buffer, sizeof(buffer));
+    std::string question(buffer);
+    std::cout << "密保问题:" << question << std::endl;
+    std::cout << "请输入答案" << std::endl;
+    std::string passwd;
+    std::cin >> passwd;
+    IO::SendMsg(sockfd, passwd.c_str(), passwd.size() + 1);
+
+    IO::RecvMsg(sockfd, buffer, sizeof(buffer));
+    std::string flag(buffer);
+    if(strcmp(flag.c_str(), "false") == 0) {
+      std::cout << "验证失败" << std::endl;
+    } else {
+      memset(buffer, 0, sizeof(buffer));
+      IO::RecvMsg(sockfd, buffer, sizeof(buffer));
+      std::string can(buffer);
+      if(strcmp(can.c_str(), "cant") == 0){
+        std::cout << "您是某个群聊的群主,请解散群聊后再注销账号" << std::endl;
+        return;
+      } else{
+        std::cout << "账号注销成功!" << std::endl;
+      }
+    }
+
+  }else{
+    std::cout << "用户名错误" << std::endl;
+  }
+}
+
 void addFriend(MsgInfo &inmsg, int sockfd) {
   std::cout << "请输入你想加的好友的名称(输入exit退出,不会有人的名字叫exit的)"
             << std::endl;
@@ -394,6 +459,7 @@ void addFriend(MsgInfo &inmsg, int sockfd) {
   IO::RecvMsg(sockfd, message, sizeof(message));
   std::string ms(message, sizeof(message));
   std::cout << ms << std::endl;
+  UserMenu2(inmsg.name);
 }
 
 void friendApply(MsgInfo &inmsg, int sockfd) {
@@ -439,6 +505,7 @@ void friendApply(MsgInfo &inmsg, int sockfd) {
       std::cout << "拒绝添加" << std::endl;
     }
   }
+  UserMenu2(inmsg.name);
 }
 
 void friendMap(MsgInfo &inmsg, int sockfd) {
@@ -521,7 +588,7 @@ void friendMap(MsgInfo &inmsg, int sockfd) {
       }
 
     } else {
-      UserMenu();
+      UserMenu2(inmsg.name);
       break;
     }
   }
@@ -544,6 +611,7 @@ void delFriend(MsgInfo &inmsg, int sockfd) {
   IO::RecvMsg(sockfd, message, sizeof(message));
   std::string ms(message);
   std::cout << ms << std::endl;
+  UserMenu2(inmsg.name);
 }
 
 void *reFromSe(void *arg) {
@@ -739,6 +807,28 @@ in:
 UserMenu();
 }
 
+// void *filesend(void *arg) {
+//   file_Info *info = (file_Info *)arg;
+//   std::string ip = info->ip;
+//   int port = info->port;
+//   int sockfd = Sock::Socket();
+//   char *ipp = const_cast<char *>(ip.c_str());
+//   Sock::Connect(sockfd, ipp, port);
+//   int filefd = info->fp;
+//   int size = info->size;
+//   std::string mes_size = info->mess;
+//   int ret;
+//   IO::SendMsg(sockfd, mes_size.c_str(), mes_size.size() + 1);
+//   while (1) {
+//     ret = sendfile(sockfd, filefd, NULL, size);
+//     if (ret == 0) {
+//       printf("文件传送成功\n");
+//       break;
+//     }
+//   }
+//   pthread_exit(0);
+// }
+
 void filefunc(MsgInfo &inmsg, int sockfd) {
   std::cout << "1.接收文件" << std::endl;
   std::cout << "2.发送文件" << std::endl;
@@ -850,6 +940,13 @@ void filefunc(MsgInfo &inmsg, int sockfd) {
         std::string mes_size = fileJson(file);
         IO::SendMsg(sockfd, mes_size.c_str(), mes_size.size() + 1);
 
+        // sleep(1);
+        // filesent.fp = filefd;
+        // filesent.size = size;
+        // filesent.mess = mes_size;
+        // pthread_t file;
+        // pthread_create(&file, NULL, filesend, (void*)&filesent);
+        // pthread_detach(file);
         int ret;
         while (1) {
           ret = sendfile(sockfd, filefd, NULL, size);
@@ -870,16 +967,21 @@ void filefunc(MsgInfo &inmsg, int sockfd) {
       std::cout << "对方不是你的好友,留言失败" << std::endl;
     }
   }
-  UserMenu();
+  UserMenu2(inmsg.name);
 }
 
 // 群聊大家族
 void registerGroup(MsgInfo &inmsg, int sockfd) {  // 注册群聊
   MsgYes group;
   group.myName = inmsg.name;
-  std::cout << "请输入群名" << std::endl;
+  std::cout << "请输入群名(输入exit退出)" << std::endl;
   getline(std::cin, group.nameWant);
   group.nameWant = removeSpaces(group.nameWant);
+  if(strcmp(group.nameWant.c_str(), "exit") == 0) {
+    std::cout << "退出注册" << std::endl;
+    return;
+    UserMenu2(inmsg.name);
+  }
   group.loginStatus = _REGISTERGROUP;
   std::string group_info = yesJson(group);
   IO::SendMsg(sockfd, group_info.c_str(), group_info.size() + 1);
@@ -893,6 +995,7 @@ void registerGroup(MsgInfo &inmsg, int sockfd) {  // 注册群聊
     std::cout << "您创建了名为: " << flag << " 的群聊, 您现在是群主"
               << std::endl;
   }
+    UserMenu2(inmsg.name);
 }
 
 void allGroup(MsgInfo &inmsg, int sockfd) {  // 查看所有已加入群聊
@@ -997,6 +1100,7 @@ void joinGroup(MsgInfo &inmsg, int sockfd) {  // 申请加入群聊
   } else {
     std::cout << "成功提交申请" << std::endl;
   }
+  UserMenu2(inmsg.name);
 }
 
 void *dd(void *arg) {
@@ -1033,9 +1137,14 @@ void *dd(void *arg) {
       std::cout << "您到了来自" << who << "的好友申请" << std::endl;
     }
     if (strcmp("file", mes.c_str()) == 0) {
-      std::cout << "您有一个文件待接收" << std::endl;
+      //std::cout << "您有一个文件待接收" << std::endl;
+      std::cout << "有人正在向您传输文件" << std::endl;
     }
-    sleep(1);
+    if(strncmp("group", mes.c_str(), 5) == 0) {
+      std::string someone = mes.erase(0, 5);
+      std::cout << "您收到了来自 " << someone << " 的加群申请" << std::endl;
+    }
+    sleep(0.5);
     // std::cout << "2222222222222" << std::endl;
   }
 
@@ -1045,14 +1154,6 @@ void *dd(void *arg) {
   // return nullptr;
 }
 
-void showfd(MsgInfo &inmsg, int sockfd)
-{
-  // MsgApply fd;
-  // fd.name = inmsg.name;
-  // fd.loginStatus = 30;
-  // std::string s = applyJson(fd);
-  // IO::SendMsg(sockfd, s.c_str(), s.size() + 1);
-}
 
 void loginAccount(MsgInfo &inmsg, login_Info &ding, int sockfd) {
   std::cout << "请输入您的昵称" << std::endl;
@@ -1113,7 +1214,7 @@ a:
         goto a;
       }
       int opt = atoi(action.c_str());
-      std::cout << "opt: " << opt << std::endl;
+      // std::cout << "opt: " << opt << std::endl;
       switch (opt) {
         case 1:  // 添加好友
         {

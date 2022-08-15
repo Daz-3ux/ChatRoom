@@ -22,6 +22,7 @@ int main(int argc, char **argv) {
   
   //printf("pid: %d", pthread_self());
   signal(SIGPIPE, SIG_IGN);
+  printf("pid: %d\n", getpid());
 
   int lfd = Sock::Socket();
   Sock::Setsock(lfd);
@@ -57,6 +58,7 @@ int main(int argc, char **argv) {
         pthread_create(&tid, NULL, acceptConn, info);
         pthread_detach(tid);
       } else if (evs[i].events & EPOLLIN) {  // 通信
+        Sock::Setsock(fd);
         pthread_create(&tid, NULL, communication, info);
         pthread_detach(tid);
       }
