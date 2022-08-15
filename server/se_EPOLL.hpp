@@ -139,11 +139,16 @@ void *communication(void *arg) {
     Redis myredis;
 
     if (status == 1) {  // 注册
-      bool ret = myredis.setHash(userMap, js["name"], s);
-      if (ret) {
-        IO::SendMsg(fd, "Success", 8);
+      int flag = myredis.hashExist(userMap, js["name"]);
+      if (flag == 0) {
+        bool ret = myredis.setHash(userMap, js["name"], s);
+        if (ret) {
+          IO::SendMsg(fd, "Success:注册成功", 21);
+        } else {
+          IO::SendMsg(fd, "Faild:注册失败", 19);
+        }
       } else {
-        IO::SendMsg(fd, "Faild", 6);
+        IO::SendMsg(fd, "用户已注册", 16);
       }
     } else if (status == 2) {  // 登陆
       std::cout << "让我们来登陆吧" << std::endl;

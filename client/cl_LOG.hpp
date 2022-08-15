@@ -81,7 +81,7 @@ struct MsgData {
   int loginStatus;
   std::string question;
   std::string answer;
-
+  
   MsgData() = default;
 };
 
@@ -845,7 +845,7 @@ void filefunc(MsgInfo &inmsg, int sockfd) {
         std::string len = std::to_string(size);
         file.len = len;
         std::cout << "size :" << size << std::endl;
-        std::cout << "len :" << len << std::endl;
+        // std::cout << "len :" << len << std::endl;
 
         std::string mes_size = fileJson(file);
         IO::SendMsg(sockfd, mes_size.c_str(), mes_size.size() + 1);
