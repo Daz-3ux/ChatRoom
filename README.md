@@ -90,11 +90,11 @@ make -j8
 - 使用Json格式化数据并传输
 
 ### such as...
-`redis`
+- `redis`
 ![](https://raw.githubusercontent.com/Daz-3ux-Img/Img-hosting/master/host/202211151837787.png)
 
-`server`
+- `server`
 ![](https://raw.githubusercontent.com/Daz-3ux-Img/Img-hosting/master/host/202211151835260.jpg)
 
-`client`
+- `client`
 ![](https://raw.githubusercontent.com/Daz-3ux-Img/Img-hosting/master/host/202211151839289.png)
