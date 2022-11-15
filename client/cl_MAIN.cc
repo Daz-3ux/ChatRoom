@@ -10,12 +10,12 @@ a:
     std::string action;
     std::cout << "请选择操作" << std::endl;
     std::cin >> action;
-    if(std::cin.eof()){
+    if (std::cin.eof()) {
       std::cout << "害人不浅" << std::endl;
       return;
     }
-    if(!isDegital(action)) {
-      std::cout << "您输入的: "<< action << "不是一个整数" << std::endl;
+    if (!isDegital(action)) {
+      std::cout << "您输入的: " << action << "不是一个整数" << std::endl;
       goto a;
     }
     int opt = atoi(action.c_str());

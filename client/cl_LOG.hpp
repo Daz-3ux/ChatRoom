@@ -1,23 +1,23 @@
 #ifndef CL_LOG_H
 #define CL_LOG_H
+#include <pthread.h>
 #include <string.h>
+#include <sys/sendfile.h>
+#include <sys/stat.h>
 
 #include <iostream>
 #include <list>
 #include <map>
 #include <nlohmann/json.hpp>
 #include <string>
-#include <vector>
-#include <sys/stat.h>
-#include <sys/sendfile.h>
 #include <thread>
-#include <pthread.h>
+#include <vector>
 
 #include "../include/IO.hpp"
 #include "../include/REDIS.hpp"
 #include "../include/SOCK.hpp"
-#include "cl_UI.hpp"
 #include "cl_GROUP.hpp"
+#include "cl_UI.hpp"
 
 using json = nlohmann::json;
 
@@ -27,8 +27,7 @@ bool isDegital(std::string str) {
   for (int i = 0; i < str.size(); i++) {
     if (str.at(i) == '-' && str.size() > 1)  // 有可能出现负数
       continue;
-    if (str.at(i) > '9' || str.at(i) < '0') 
-      return false;
+    if (str.at(i) > '9' || str.at(i) < '0') return false;
   }
   return true;
 }
@@ -62,9 +61,7 @@ enum Status {
   _COMAPPLY
 };
 
-enum supplement {
-  _OUTCHAT = 38
-};
+enum supplement { _OUTCHAT = 38 };
 
 struct login_Info {
   std::string ip;
@@ -342,7 +339,7 @@ void findPassword(int sockfd) {
   MsgApply find;
   std::cout << "请输入您的用户名" << std::endl;
   std::cin >> find.name;
-  //find.name = inmsg.name;
+  // find.name = inmsg.name;
   find.loginStatus = _FINDPASSWD;
   std::string find_info = applyJson(find);
   IO::SendMsg(sockfd, find_info.c_str(), find_info.size() + 1);
@@ -361,13 +358,13 @@ void findPassword(int sockfd) {
 
     IO::RecvMsg(sockfd, buffer, sizeof(buffer));
     std::string flag(buffer);
-    if(strcmp(flag.c_str(), "false") == 0) {
+    if (strcmp(flag.c_str(), "false") == 0) {
       std::cout << "密保验证失败" << std::endl;
-    }else {
+    } else {
       std::cout << "您的密码为 " << flag << "(^▽^)" << std::endl;
     }
 
-  }else{
+  } else {
     std::cout << "用户名错误" << std::endl;
   }
 }
@@ -376,7 +373,7 @@ void delself(int sockfd) {
   MsgApply find;
   std::cout << "请输入您的用户名" << std::endl;
   std::cin >> find.name;
-  //find.name = inmsg.name;
+  // find.name = inmsg.name;
   find.loginStatus = _DELONESELF;
   std::string find_info = applyJson(find);
   IO::SendMsg(sockfd, find_info.c_str(), find_info.size() + 1);
@@ -393,9 +390,7 @@ void delself(int sockfd) {
     getline(std::cin, myPasswd);
     myPasswd = removeSpaces(myPasswd);
     system("stty echo");
-    IO::SendMsg(sockfd, myPasswd.c_str(), myPasswd.size()+1);
-
-
+    IO::SendMsg(sockfd, myPasswd.c_str(), myPasswd.size() + 1);
 
     IO::RecvMsg(sockfd, buffer, sizeof(buffer));
     std::string question(buffer);
@@ -407,21 +402,21 @@ void delself(int sockfd) {
 
     IO::RecvMsg(sockfd, buffer, sizeof(buffer));
     std::string flag(buffer);
-    if(strcmp(flag.c_str(), "false") == 0) {
+    if (strcmp(flag.c_str(), "false") == 0) {
       std::cout << "验证失败" << std::endl;
     } else {
       memset(buffer, 0, sizeof(buffer));
       IO::RecvMsg(sockfd, buffer, sizeof(buffer));
       std::string can(buffer);
-      if(strcmp(can.c_str(), "cant") == 0){
+      if (strcmp(can.c_str(), "cant") == 0) {
         std::cout << "您是某个群聊的群主,请解散群聊后再注销账号" << std::endl;
         return;
-      } else{
+      } else {
         std::cout << "账号注销成功!" << std::endl;
       }
     }
 
-  }else{
+  } else {
     std::cout << "用户名错误" << std::endl;
   }
 }
@@ -476,7 +471,7 @@ void friendApply(MsgInfo &inmsg, int sockfd) {
   IO::RecvMsg(sockfd, message, sizeof(message));
   std::string ms(message);
   // std::cout << ms << std::endl;
-  if(strcmp(ms.c_str(), "empty") == 0) {
+  if (strcmp(ms.c_str(), "empty") == 0) {
     std::cout << "暂无好友申请" << std::endl;
     return;
   }
@@ -522,7 +517,7 @@ void friendMap(MsgInfo &inmsg, int sockfd) {
   int len = atoi(ms.c_str());
 
   // std::cout << "len453 : " << len << std::endl;
-  
+
   for (int i = 0; i < len; i++) {
     // sleep(0.5);
     memset(mess, 0, sizeof(mess));
@@ -621,14 +616,14 @@ void *reFromSe(void *arg) {
     memset(buffer, 0, sizeof(buffer));
     int ret = IO::RecvMsg(fd, buffer, sizeof(buffer));
     std::string a(buffer);
-    //std::cout << "a558: a & ret: " << a  << " & " << ret << std::endl;
+    // std::cout << "a558: a & ret: " << a  << " & " << ret << std::endl;
     if (strcmp(a.c_str(), "对方已退出聊天") == 0) {
       std::cout << a << ",请输入exit退出" << std::endl;
       pthread_exit(0);
-    } else if(strcmp(a.c_str(), "成功退出聊天") == 0) {
+    } else if (strcmp(a.c_str(), "成功退出聊天") == 0) {
       pthread_exit(0);
     } else {
-      //printf("\n");
+      // printf("\n");
       std::cout << '\n' << a << std::endl;
     }
   }
@@ -639,11 +634,11 @@ void *reFromSe(void *arg) {
 void talkto(MsgInfo &inmsg, int sockfd) {
   std::cout << "1.接收留言" << std::endl;
   std::cout << "2.开始聊天" << std::endl;
-  std::cout << "3.查看历史聊天记录"  << std::endl;
+  std::cout << "3.查看历史聊天记录" << std::endl;
   std::string opt;
   getline(std::cin, opt);
   opt = removeSpaces(opt);
-if (strcmp(opt.c_str(), "1") == 0) {
+  if (strcmp(opt.c_str(), "1") == 0) {
     MsgApply rece;
     rece.name = inmsg.name;
     rece.loginStatus = _RETALK;
@@ -662,149 +657,143 @@ if (strcmp(opt.c_str(), "1") == 0) {
       std::string m(mess);
       std::cout << m << std::endl;
     }
-} else if (strcmp(opt.c_str(), "2") == 0) {
-  MsgYes talk;
-  talk.myName = inmsg.name;
-  std::cout << "请输入想要私聊的好友(输入exit退出)" << std::endl;
-  getline(std::cin, talk.nameWant);
-  talk.nameWant = removeSpaces(talk.nameWant);
-  talk.loginStatus = _TALK;
-  std::string mess = yesJson(talk);
-  IO::SendMsg(sockfd, mess.c_str(), mess.size() + 1);
+  } else if (strcmp(opt.c_str(), "2") == 0) {
+    MsgYes talk;
+    talk.myName = inmsg.name;
+    std::cout << "请输入想要私聊的好友(输入exit退出)" << std::endl;
+    getline(std::cin, talk.nameWant);
+    talk.nameWant = removeSpaces(talk.nameWant);
+    talk.loginStatus = _TALK;
+    std::string mess = yesJson(talk);
+    IO::SendMsg(sockfd, mess.c_str(), mess.size() + 1);
 
-//again:
-  char message[1024];
-  memset(message, 0, sizeof(message));
-  IO::RecvMsg(sockfd, message, sizeof(message));
-  std::string ms(message);
-
-  //std::cout << "ms616 : " << ms << std::endl;
-
-
-  if (strcmp(ms.c_str(), "offline") == 0) {
-    // 对方不在线
-    std::cout << "对方不在线,请留言(输入exit退出)" << std::endl;
-    MsgTalk talkPri;
-    talkPri.name = inmsg.name;
-    talkPri.nameWant = talk.nameWant;
-    getline(std::cin, talkPri.mess);
-    talkPri.mess = removeSpaces(talkPri.mess);
-    talkPri.loginStatus = _OUTCHAT;
-
-    if (strcmp(talkPri.mess.c_str(), "exit") == 0) {
-      std::cout << "退出留言" << std::endl;
-    } else {
-      std::string mes = talkJson(talkPri);
-      IO::SendMsg(sockfd, mes.c_str(), mes.size() + 1);
-    }
-
-  } else if (strcmp(ms.c_str(), "online") == 0) {
-    //对方在线,实时聊天
-
-    std::cout << "对方在线" << std::endl;
-
-    MsgTalk talkIn;
-    talkIn.name = inmsg.name;
-    talkIn.nameWant = talk.nameWant;
-    talkIn.loginStatus = _ONLINECHAT;
-
-    MsgTalk talkOut;
-    talkOut.name = inmsg.name;
-    talkOut.nameWant = talk.nameWant;
-    talkOut.loginStatus = _OUTCHAT;
-
+    // again:
+    char message[1024];
     memset(message, 0, sizeof(message));
     IO::RecvMsg(sockfd, message, sizeof(message));
     std::string ms(message);
-    if(strcmp(ms.c_str(), "in") == 0) {
-in:
-    std::cout << "开始实时聊天(输入exit退出)" << std::endl;
-    pthread_t tid;
-    pthread_create(&tid, NULL, reFromSe, (void *)&sockfd);
-    pthread_detach(tid);
 
-    while(true) {
-      getline(std::cin, talkIn.mess);
-      talkIn.mess = removeSpaces(talkIn.mess);
-      std::string talkmsg = talkJson(talkIn);
-      IO::SendMsg(sockfd, talkmsg.c_str(), talkmsg.size() + 1);
-      if (strcmp("exit", talkIn.mess.c_str()) == 0) {
-        sleep(0.5);
-        break;
+    // std::cout << "ms616 : " << ms << std::endl;
+
+    if (strcmp(ms.c_str(), "offline") == 0) {
+      // 对方不在线
+      std::cout << "对方不在线,请留言(输入exit退出)" << std::endl;
+      MsgTalk talkPri;
+      talkPri.name = inmsg.name;
+      talkPri.nameWant = talk.nameWant;
+      getline(std::cin, talkPri.mess);
+      talkPri.mess = removeSpaces(talkPri.mess);
+      talkPri.loginStatus = _OUTCHAT;
+
+      if (strcmp(talkPri.mess.c_str(), "exit") == 0) {
+        std::cout << "退出留言" << std::endl;
+      } else {
+        std::string mes = talkJson(talkPri);
+        IO::SendMsg(sockfd, mes.c_str(), mes.size() + 1);
       }
-    }
-    // char to[1024];
-    // memset(to, 0, sizeof(to));
-    // IO::RecvMsg(sockfd, to, sizeof(to));
-    
-    }else if (strcmp(ms.c_str(), "noin") == 0){ // noin
-      std::cout << "对方不在聊天菜单内,开始留言(输入exit退出)" << std::endl;
-      while (true) {
-        getline(std::cin, talkOut.mess);
-        talkOut.mess = removeSpaces(talkOut.mess);
-        if(strcmp(talkOut.mess.c_str(), "exit") == 0) {
-          std::cout << "退出聊天"  << std::endl;
-          break;
-        }
-        std::string ss = talkJson(talkOut);
-        IO::SendMsg(sockfd, ss.c_str(), ss.size() + 1);
 
-        char mes[1024];
-        memset(mes, 0, sizeof(mes));
-        IO::RecvMsg(sockfd, mes, sizeof(mes));
-        std::string ms(mes);
-        if(strcmp(ms.c_str(), "havein") == 0) {
-          std::cout << "对方进入聊天界面,开始实时聊天" << std::endl;
-          goto in;
-        }else {
-          std::cout << "继续留言(输入exit退出)" << std::endl;
-        }
-      }
-    }
+    } else if (strcmp(ms.c_str(), "online") == 0) {
+      //对方在线,实时聊天
 
+      std::cout << "对方在线" << std::endl;
 
+      MsgTalk talkIn;
+      talkIn.name = inmsg.name;
+      talkIn.nameWant = talk.nameWant;
+      talkIn.loginStatus = _ONLINECHAT;
 
+      MsgTalk talkOut;
+      talkOut.name = inmsg.name;
+      talkOut.nameWant = talk.nameWant;
+      talkOut.loginStatus = _OUTCHAT;
 
-    
-  } else if (strcmp(ms.c_str(), "BLOCK") == 0) {
-    std::cout << "您被对方屏蔽了¯\'(⊙︿⊙)/¯" << std::endl;
-  } else if (strcmp(ms.c_str(), "onchat") == 0) {
-    std::cout << "对方已经在聊天了" << std::endl;
-  } 
-  // else if((ms.find("给你发来了消息")) != std::string::npos) {
-  //   std::cout << ms << std::endl;
-  //   goto again;
-  // } 
-  else if(strcmp(ms.c_str(), "not") == 0){
-    std::cout << "对方不是你的好友" << std::endl;
-  }
-} else {  // opt == 3
-  std::cout << "您想查看与谁的历史聊天记录(输入exit退出)" << std::endl;
-  MsgYes his;
-  getline(std::cin, his.nameWant);
-  his.myName = inmsg.name;
-  his.loginStatus = _HISTORY;
-  std::string s = yesJson(his);
-  IO::SendMsg(sockfd, s.c_str(), s.size() + 1);
-
-  char message[1024];
-  memset(message, 0, sizeof(message));
-  IO::RecvMsg(sockfd, message, sizeof(message));
-  std::string mess(message);
-  if(strcmp(mess.c_str(), "notexist") == 0) {
-    std::cout << "聊天记录为空" << std::endl;
-  }else {
-    int len = atoi(mess.c_str());
-    for(int i = 0; i < len; i++) {
       memset(message, 0, sizeof(message));
       IO::RecvMsg(sockfd, message, sizeof(message));
-      std::string mess(message);
-      std::cout << mess << std::endl;
+      std::string ms(message);
+      if (strcmp(ms.c_str(), "in") == 0) {
+      in:
+        std::cout << "开始实时聊天(输入exit退出)" << std::endl;
+        pthread_t tid;
+        pthread_create(&tid, NULL, reFromSe, (void *)&sockfd);
+        pthread_detach(tid);
+
+        while (true) {
+          getline(std::cin, talkIn.mess);
+          talkIn.mess = removeSpaces(talkIn.mess);
+          std::string talkmsg = talkJson(talkIn);
+          IO::SendMsg(sockfd, talkmsg.c_str(), talkmsg.size() + 1);
+          if (strcmp("exit", talkIn.mess.c_str()) == 0) {
+            sleep(0.5);
+            break;
+          }
+        }
+        // char to[1024];
+        // memset(to, 0, sizeof(to));
+        // IO::RecvMsg(sockfd, to, sizeof(to));
+
+      } else if (strcmp(ms.c_str(), "noin") == 0) {  // noin
+        std::cout << "对方不在聊天菜单内,开始留言(输入exit退出)" << std::endl;
+        while (true) {
+          getline(std::cin, talkOut.mess);
+          talkOut.mess = removeSpaces(talkOut.mess);
+          if (strcmp(talkOut.mess.c_str(), "exit") == 0) {
+            std::cout << "退出聊天" << std::endl;
+            break;
+          }
+          std::string ss = talkJson(talkOut);
+          IO::SendMsg(sockfd, ss.c_str(), ss.size() + 1);
+
+          char mes[1024];
+          memset(mes, 0, sizeof(mes));
+          IO::RecvMsg(sockfd, mes, sizeof(mes));
+          std::string ms(mes);
+          if (strcmp(ms.c_str(), "havein") == 0) {
+            std::cout << "对方进入聊天界面,开始实时聊天" << std::endl;
+            goto in;
+          } else {
+            std::cout << "继续留言(输入exit退出)" << std::endl;
+          }
+        }
+      }
+
+    } else if (strcmp(ms.c_str(), "BLOCK") == 0) {
+      std::cout << "您被对方屏蔽了¯\'(⊙︿⊙)/¯" << std::endl;
+    } else if (strcmp(ms.c_str(), "onchat") == 0) {
+      std::cout << "对方已经在聊天了" << std::endl;
+    }
+    // else if((ms.find("给你发来了消息")) != std::string::npos) {
+    //   std::cout << ms << std::endl;
+    //   goto again;
+    // }
+    else if (strcmp(ms.c_str(), "not") == 0) {
+      std::cout << "对方不是你的好友" << std::endl;
+    }
+  } else {  // opt == 3
+    std::cout << "您想查看与谁的历史聊天记录(输入exit退出)" << std::endl;
+    MsgYes his;
+    getline(std::cin, his.nameWant);
+    his.myName = inmsg.name;
+    his.loginStatus = _HISTORY;
+    std::string s = yesJson(his);
+    IO::SendMsg(sockfd, s.c_str(), s.size() + 1);
+
+    char message[1024];
+    memset(message, 0, sizeof(message));
+    IO::RecvMsg(sockfd, message, sizeof(message));
+    std::string mess(message);
+    if (strcmp(mess.c_str(), "notexist") == 0) {
+      std::cout << "聊天记录为空" << std::endl;
+    } else {
+      int len = atoi(mess.c_str());
+      for (int i = 0; i < len; i++) {
+        memset(message, 0, sizeof(message));
+        IO::RecvMsg(sockfd, message, sizeof(message));
+        std::string mess(message);
+        std::cout << mess << std::endl;
+      }
     }
   }
-
-}
-UserMenu();
+  UserMenu();
 }
 
 // void *filesend(void *arg) {
@@ -887,7 +876,7 @@ void filefunc(MsgInfo &inmsg, int sockfd) {
 
       fclose(fp);
     }
-  } else if(strcmp(opt.c_str(), "2") == 0){
+  } else if (strcmp(opt.c_str(), "2") == 0) {
     // 好友关系逻辑判断
     MsgTalk talk;
     talk.name = inmsg.name;
@@ -951,7 +940,7 @@ void filefunc(MsgInfo &inmsg, int sockfd) {
         while (1) {
           ret = sendfile(sockfd, filefd, NULL, size);
           // printf("---文件<%s>传送成功---\n", buf);
-          //system("sync");
+          // system("sync");
           if (ret == 0) {
             printf("文件传送成功\n");
             break;
@@ -977,7 +966,7 @@ void registerGroup(MsgInfo &inmsg, int sockfd) {  // 注册群聊
   std::cout << "请输入群名(输入exit退出)" << std::endl;
   getline(std::cin, group.nameWant);
   group.nameWant = removeSpaces(group.nameWant);
-  if(strcmp(group.nameWant.c_str(), "exit") == 0) {
+  if (strcmp(group.nameWant.c_str(), "exit") == 0) {
     std::cout << "退出注册" << std::endl;
     return;
     UserMenu2(inmsg.name);
@@ -995,7 +984,7 @@ void registerGroup(MsgInfo &inmsg, int sockfd) {  // 注册群聊
     std::cout << "您创建了名为: " << flag << " 的群聊, 您现在是群主"
               << std::endl;
   }
-    UserMenu2(inmsg.name);
+  UserMenu2(inmsg.name);
 }
 
 void allGroup(MsgInfo &inmsg, int sockfd) {  // 查看所有已加入群聊
@@ -1029,48 +1018,48 @@ b:
       return;
     }
     action = removeSpaces(action);
-    if(!isDegital(action)) {
-      std::cout << "您输入的: "<< action << "不是一个整数" << std::endl;
+    if (!isDegital(action)) {
+      std::cout << "您输入的: " << action << "不是一个整数" << std::endl;
       goto b;
     }
     int opt = atoi(action.c_str());
-    
-    if(opt == 1 ) { // 解散群聊 
+
+    if (opt == 1) {  // 解散群聊
       deleteGroup(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 2 ) { // 处理群申请
+    } else if (opt == 2) {  // 处理群申请
       groupApply(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 3 ) { // 设置管理员
+    } else if (opt == 3) {  // 设置管理员
       setdog(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 4 ) { // 撤销管理员
+    } else if (opt == 4) {  // 撤销管理员
       notdog(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 5 ) { // 禁言群成员
+    } else if (opt == 5) {  // 禁言群成员
       ban(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 6 ) { // 取消禁言
+    } else if (opt == 6) {  // 取消禁言
       noban(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 7 ) { // 开始群聊
+    } else if (opt == 7) {  // 开始群聊
       joinchat(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 8 ) { //踢出群聊
+    } else if (opt == 8) {  //踢出群聊
       deletesomeone(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 9 ) { //查看群成员
+    } else if (opt == 9) {  //查看群成员
       allpeople(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == 10 ) { // 查看群聊天记录
+    } else if (opt == 10) {  // 查看群聊天记录
       allhistory(inmsg.name, sockfd);
       secondGroupMenu();
-    }else if(opt == -1 ) { // 退出菜单
+    } else if (opt == -1) {  // 退出菜单
       std::cout << "即将退出群聊菜单" << std::endl;
       sleep(1);
       UserMenu();
       return;
-    }else {
+    } else {
       std::cout << "输入错误,请重新输入" << std::endl;
       secondGroupMenu();
     }
@@ -1129,7 +1118,7 @@ void *dd(void *arg) {
       std::cout << "mes:" << mes << std::endl;
       std::string who = mes.erase(0, 5);
       std::cout << "who:" << who << std::endl;
-      std::cout << "你收到了一条留言,来自: "<< who << std::endl;
+      std::cout << "你收到了一条留言,来自: " << who << std::endl;
       std::cout << "如果对方在线,您可前往聊天界面与对方聊天" << std::endl;
     }
     if (strncmp("apply", mes.c_str(), 5) == 0) {
@@ -1137,10 +1126,10 @@ void *dd(void *arg) {
       std::cout << "您到了来自" << who << "的好友申请" << std::endl;
     }
     if (strcmp("file", mes.c_str()) == 0) {
-      //std::cout << "您有一个文件待接收" << std::endl;
+      // std::cout << "您有一个文件待接收" << std::endl;
       std::cout << "有人正在向您传输文件" << std::endl;
     }
-    if(strncmp("group", mes.c_str(), 5) == 0) {
+    if (strncmp("group", mes.c_str(), 5) == 0) {
       std::string someone = mes.erase(0, 5);
       std::cout << "您收到了来自 " << someone << " 的加群申请" << std::endl;
     }
@@ -1153,7 +1142,6 @@ void *dd(void *arg) {
 
   // return nullptr;
 }
-
 
 void loginAccount(MsgInfo &inmsg, login_Info &ding, int sockfd) {
   std::cout << "请输入您的昵称" << std::endl;
@@ -1195,20 +1183,20 @@ void loginAccount(MsgInfo &inmsg, login_Info &ding, int sockfd) {
     pthread_create(&dingdong, NULL, dd, (void *)&ding);
     pthread_detach(dingdong);
 
-a:
+  a:
     while (1) {
       std::string action;
       std::cout << "请选择操作" << std::endl;
       // std::cin >> action;
-      //std::cin.get();
+      // std::cin.get();
       getline(std::cin, action);
       if (std::cin.eof()) {
         std::cout << "害人不浅" << std::endl;
         return;
       }
       action = removeSpaces(action);
-      //std::cout<< "action:  " << action << std::endl;
-      if(!isDegital(action)) {
+      // std::cout<< "action:  " << action << std::endl;
+      if (!isDegital(action)) {
         std::cout << "您输入的: " << action << "不是一个整数" << std::endl;
         UserMenu();
         goto a;
@@ -1264,7 +1252,7 @@ a:
         case -1:  // 退出
         {
           std::cout << "即将退出账号!" << std::endl;
-          inmsg.loginStatus = _OFF;                
+          inmsg.loginStatus = _OFF;
           std::string login_info = loginJson(inmsg);
           IO::SendMsg(sockfd, login_info.c_str(), login_info.size() + 1);
           sleep(1);

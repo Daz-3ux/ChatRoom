@@ -3,18 +3,18 @@
 
 #include <hiredis/hiredis.h>
 
+#include <cstring>
 #include <iostream>
 #include <list>
 #include <set>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <cstring>
 
 #include "error.h"
 
 class Redis {
-public:
+ public:
   Redis() {
     m_redis = NULL;
     init();
@@ -71,13 +71,13 @@ public:
     redisReply *reply;
     reply = (redisReply *)redisCommand(m_redis, "GET %s", key.c_str());
     std::string s = "";
-    if(reply == NULL) {
+    if (reply == NULL) {
       return s;
     }
     std::stringstream ss;
     ss << reply->str;
     freeReplyObject(reply);
-    return ss.str(); 
+    return ss.str();
   }
 
   bool delKey(std::string key) {  // DEL
@@ -281,14 +281,15 @@ public:
     return reply->integer;
   }
 
-  std::vector<std::string> smembers(std::string key) {  // SMEMBERS: 返回集合中所有成员
+  std::vector<std::string> smembers(
+      std::string key) {  // SMEMBERS: 返回集合中所有成员
     redisReply *reply;
     reply = (redisReply *)redisCommand(m_redis, "SCARD %s", key.c_str());
     int size = reply->integer;
     reply = (redisReply *)redisCommand(m_redis, "SMEMBERS %s", key.c_str());
     redisReply **replyVector = reply->element;
     std::vector<std::string> result;
-    for(int i = 0; i < size; i++) {
+    for (int i = 0; i < size; i++) {
       std::string temp = (*replyVector)->str;
       result.push_back(temp);
       replyVector++;
@@ -385,7 +386,7 @@ public:
     return reply->str;
   }
 
-private:
+ private:
   void init() {
     struct timeval timeout = {1, 50000};  // 连接等待时间为1.5秒
     m_redis = redisConnectWithTimeout("127.0.0.1", 6379, timeout);

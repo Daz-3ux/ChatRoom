@@ -1,10 +1,11 @@
 #ifndef _CL_GROUP_H_
 #define _CL_GROUP_H_
 
+#include <nlohmann/json.hpp>
+
 #include "../include/IO.hpp"
 #include "../include/REDIS.hpp"
 #include "../include/SOCK.hpp"
-#include <nlohmann/json.hpp>
 
 enum group {
   _DELGROUP = 26,
@@ -30,7 +31,7 @@ struct MsgCommon {
   int loginStatus;
 
   MsgCommon() = default;
-}; 
+};
 
 std::string commonJson(MsgCommon &msg) {
   json common;
@@ -43,11 +44,11 @@ std::string commonJson(MsgCommon &msg) {
   return s;
 }
 
-void deleteGroup(std::string name, int sockfd) { // 解散群聊
+void deleteGroup(std::string name, int sockfd) {  // 解散群聊
   MsgCommon del;
   del.myName = name;
   std::cout << "请输入您想要解散的群聊" << std::endl;
-  getline(std::cin,del.nameWant);
+  getline(std::cin, del.nameWant);
   del.nameWant = removeSpaces(del.nameWant);
   del.mess = "";
   del.loginStatus = _DELGROUP;
@@ -59,15 +60,15 @@ void deleteGroup(std::string name, int sockfd) { // 解散群聊
   memset(mess, 0, sizeof(mess));
   IO::RecvMsg(sockfd, mess, sizeof(mess));
   std::string ss(mess);
-  if(strcmp(ss.c_str(), "nogroup") == 0) {
+  if (strcmp(ss.c_str(), "nogroup") == 0) {
     std::cout << "您想要解散的群聊不存在" << std::endl;
-  }else {
+  } else {
     memset(mess, 0, sizeof(mess));
     IO::RecvMsg(sockfd, mess, sizeof(mess));
     std::string ss(mess);
-    if(strcmp(ss.c_str(), "nopower") == 0) {
+    if (strcmp(ss.c_str(), "nopower") == 0) {
       std::cout << "只有群主可以解散群聊" << std::endl;
-    }else{
+    } else {
       printf("*******************\n");
       std::cout << "解散成功!!!" << std::endl;
       printf("*******************\n");
@@ -75,7 +76,7 @@ void deleteGroup(std::string name, int sockfd) { // 解散群聊
   }
 }
 
-void groupApply(std::string name, int sockfd) { // 处理群聊申请
+void groupApply(std::string name, int sockfd) {  // 处理群聊申请
   std::cout << "请输入您想要管理的群" << std::endl;
   MsgCommon app;
   app.myName = name;
@@ -91,23 +92,23 @@ void groupApply(std::string name, int sockfd) { // 处理群聊申请
   IO::RecvMsg(sockfd, message, sizeof(message));
   std::string mes(message);
 
-  if(strcmp(mes.c_str(), "not") == 0) {
+  if (strcmp(mes.c_str(), "not") == 0) {
     std::cout << "您甚至不是该群的成员" << std::endl;
-  }else if(strcmp(mes.c_str(), "no") == 0) {
+  } else if (strcmp(mes.c_str(), "no") == 0) {
     std::cout << "您的权限不够" << std::endl;
-  }else if(strcmp(mes.c_str(), "yes") == 0) {
+  } else if (strcmp(mes.c_str(), "yes") == 0) {
     memset(message, 0, sizeof(message));
     IO::RecvMsg(sockfd, message, sizeof(message));
     std::string mes(message);
-    if(strcmp(mes.c_str(), "empty") == 0) {
+    if (strcmp(mes.c_str(), "empty") == 0) {
       std::cout << "暂无申请" << std::endl;
-    }else {
+    } else {
       int len = atoi(mes.c_str());
       for (int i = 0; i < len; i++) {
         memset(message, 0, sizeof(message));
         IO::RecvMsg(sockfd, message, sizeof(message));
         std::string mes(message);
-        std::cout << "收到来自 " << mes  << "的加群申请" << std::endl;
+        std::cout << "收到来自 " << mes << "的加群申请" << std::endl;
         std::cout << "是否同意申请(y/N)" << std::endl;
 
         std::string judge;
@@ -125,14 +126,12 @@ void groupApply(std::string name, int sockfd) { // 处理群聊申请
         } else {
           std::cout << "拒绝成功" << std::endl;
         }
-        }
+      }
     }
-
   }
-
 }
 
-void setdog(std::string name, int sockfd){ // 设置管理员
+void setdog(std::string name, int sockfd) {  // 设置管理员
   std::cout << "请输入您想要管理的群" << std::endl;
   MsgCommon app;
   app.myName = name;
@@ -141,7 +140,7 @@ void setdog(std::string name, int sockfd){ // 设置管理员
   std::cout << "您想要将谁设置为管理员" << std::endl;
   getline(std::cin, app.mess);
   app.mess = removeSpaces(app.mess);
-  if(app.myName == app.nameWant) {
+  if (app.myName == app.nameWant) {
     std::cout << "您不能设置自己为管理员" << std::endl;
     return;
   }
@@ -154,27 +153,25 @@ void setdog(std::string name, int sockfd){ // 设置管理员
   IO::RecvMsg(sockfd, message, sizeof(message));
   std::string mes(message);
 
-  if(strcmp(mes.c_str(), "not") == 0) {
+  if (strcmp(mes.c_str(), "not") == 0) {
     std::cout << "您甚至不是该群的成员" << std::endl;
-  }else if(strcmp(mes.c_str(), "no") == 0) {
+  } else if (strcmp(mes.c_str(), "no") == 0) {
     std::cout << "您的权限不够" << std::endl;
-  }else if(strcmp(mes.c_str(), "yes") == 0) {
+  } else if (strcmp(mes.c_str(), "yes") == 0) {
     memset(message, 0, sizeof(message));
     IO::RecvMsg(sockfd, message, sizeof(message));
     std::string mes(message);
-    if(strcmp(mes.c_str(), "already") == 0) {
+    if (strcmp(mes.c_str(), "already") == 0) {
       std::cout << app.mess << "已经是管理员了" << std::endl;
-    }else if(strcmp(mes.c_str(), "notpeople") == 0) {
-      std::cout << "群聊中没有此人"  << std::endl;
-    }else {
+    } else if (strcmp(mes.c_str(), "notpeople") == 0) {
+      std::cout << "群聊中没有此人" << std::endl;
+    } else {
       std::cout << app.mess << "成为了管理员!" << std::endl;
     }
-
   }
-
 }
 
-void notdog(std::string name, int sockfd){ // 撤销管理员
+void notdog(std::string name, int sockfd) {  // 撤销管理员
   std::cout << "请输入您想要管理的群" << std::endl;
   MsgCommon app;
   app.myName = name;
@@ -183,7 +180,7 @@ void notdog(std::string name, int sockfd){ // 撤销管理员
   std::cout << "您想取消谁的管理员资格" << std::endl;
   getline(std::cin, app.mess);
   app.mess = removeSpaces(app.mess);
-  if(app.myName == app.nameWant) {
+  if (app.myName == app.nameWant) {
     std::cout << "矛盾很你就" << std::endl;
     return;
   }
@@ -196,25 +193,25 @@ void notdog(std::string name, int sockfd){ // 撤销管理员
   IO::RecvMsg(sockfd, message, sizeof(message));
   std::string mes(message);
 
-  if(strcmp(mes.c_str(), "not") == 0) {
+  if (strcmp(mes.c_str(), "not") == 0) {
     std::cout << "您甚至不是该群的成员" << std::endl;
-  }else if(strcmp(mes.c_str(), "no") == 0) {
+  } else if (strcmp(mes.c_str(), "no") == 0) {
     std::cout << "您的权限不够" << std::endl;
-  }else if(strcmp(mes.c_str(), "yes") == 0) {
+  } else if (strcmp(mes.c_str(), "yes") == 0) {
     memset(message, 0, sizeof(message));
     IO::RecvMsg(sockfd, message, sizeof(message));
     std::string mes(message);
-    if(strcmp(mes.c_str(), "already") == 0) {
+    if (strcmp(mes.c_str(), "already") == 0) {
       std::cout << app.mess << "本来就不是管理员" << std::endl;
-    }else if(strcmp(mes.c_str(), "notpeople") == 0) {
-      std::cout << "群聊中没有此人"  << std::endl;
-    }else {
+    } else if (strcmp(mes.c_str(), "notpeople") == 0) {
+      std::cout << "群聊中没有此人" << std::endl;
+    } else {
       std::cout << app.mess << "不再是管理员了!" << std::endl;
     }
   }
 }
 
-void ban(std::string name, int sockfd){ // 禁言群成员
+void ban(std::string name, int sockfd) {  // 禁言群成员
   MsgCommon ban;
   ban.myName = name;
   std::cout << "请输入您想要管理的群聊" << std::endl;
@@ -262,7 +259,7 @@ void ban(std::string name, int sockfd){ // 禁言群成员
   }
 }
 
-void noban(std::string name, int sockfd){ // 取消禁言
+void noban(std::string name, int sockfd) {  // 取消禁言
   MsgCommon ban;
   ban.myName = name;
   std::cout << "请输入您想要管理的群聊" << std::endl;
@@ -316,7 +313,7 @@ void *reFromChat(void *arg) {
   while (1) {
     memset(buffer, 0, sizeof(buffer));
     int len = IO::RecvMsg(fd, buffer, sizeof(buffer));
-    //printf("%d :receive len in 319", len);
+    // printf("%d :receive len in 319", len);
     std::string a(buffer);
     if (strcmp(a.c_str(), "exit") == 0) {
       pthread_exit(0);
@@ -342,7 +339,7 @@ void joinchat(std::string name, int sockfd) {  // 开始群聊
   memset(message, 0, sizeof(message));
   IO::RecvMsg(sockfd, message, sizeof(message));
   std::string mes(message);
-  if(strcmp(mes.c_str(), "not") == 0) { 
+  if (strcmp(mes.c_str(), "not") == 0) {
     std::cout << "您不是该群聊成员" << std::endl;
     return;
   } else {
@@ -443,7 +440,7 @@ void allpeople(std::string name, int sockfd) {  // 查看群聊中所有成员
   IO::RecvMsg(sockfd, buf, sizeof(buf));
   std::string mes(buf);
 
-  //std::cout << "mes445: "<< mes << std::endl;
+  // std::cout << "mes445: "<< mes << std::endl;
 
   if (strcmp(mes.c_str(), "not") == 0) {
     std::cout << "您甚至不是该群的成员" << std::endl;
@@ -451,26 +448,26 @@ void allpeople(std::string name, int sockfd) {  // 查看群聊中所有成员
     memset(buf, 0, sizeof(buf));
     IO::RecvMsg(sockfd, buf, sizeof(buf));
     std::string mes(buf);
-    //std::cout << "mes453: " << mes << std::endl;
+    // std::cout << "mes453: " << mes << std::endl;
     int len = atoi(mes.c_str());
-    //std::cout << "len455: " << len << std::endl;
+    // std::cout << "len455: " << len << std::endl;
     std::cout << "成员列表如下" << std::endl;
     printf("*******************\n");
 
     for (int i = 0; i < len; i++) {
       memset(buf, 0, sizeof(buf));
-      //std::cout << "recv fd: " << sockfd << std::endl;
+      // std::cout << "recv fd: " << sockfd << std::endl;
       IO::RecvMsg(sockfd, buf, sizeof(buf));
       std::string mes(buf);
       std::cout << mes << std::endl;
     }
     printf("*******************\n");
-  }else{
+  } else {
     std::cout << "111in468 " << mes << std::endl;
   }
 }
 
-void allhistory(std::string name, int sockfd) { // 查看群聊聊天记录
+void allhistory(std::string name, int sockfd) {  // 查看群聊聊天记录
   MsgCommon all;
   all.myName = name;
   std::cout << "请输入您想查看的群聊" << std::endl;

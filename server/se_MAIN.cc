@@ -19,8 +19,8 @@ int main(int argc, char **argv) {
     PORT = atoi(argv[2]);
     std::cout << "ip_address: " << IP << " port_number: " << PORT << std::endl;
   }
-  
-  //printf("pid: %d", pthread_self());
+
+  // printf("pid: %d", pthread_self());
   signal(SIGPIPE, SIG_IGN);
   printf("pid: %d\n", getpid());
 
