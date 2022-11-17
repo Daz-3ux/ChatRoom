@@ -14,15 +14,19 @@ A little chatroom with cpp
 - Json
 
 # Getting started
-`terminal 0`： run Redis & server
+`terminal 0`:run Redis 
+```bash
+redis-server
+```
+
+`terminal 1`:run server
 ```bash
 git clone https://github.com/Daz-3ux/Chat_In_Cpp.git & cd Chat_In_Cpp
 
-redis-server
-
 cd server && make -j8
 ```
-`terminal 1`：run client
+
+`terminal 2`:run client
 ```bash
 cd Chat_In_Cpp && cd client
 make -j8
